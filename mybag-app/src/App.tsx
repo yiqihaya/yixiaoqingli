@@ -137,11 +137,12 @@ function App() {
         setTimeout(() => speak(aiMsg.content), 300)
       }
     } catch (error) {
-      console.error('AI error:', error)
+      const errMsg = error instanceof Error ? error.message : String(error)
+      console.error('AI error:', errMsg)
       const errorMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: '嗚嗚…剛剛網路怪怪的，你再說一次好不好？QQ',
+        content: '嗚嗚…剛剛網路怪怪的，你再說一次好不好？(' + errMsg.slice(0, 30) + ')',
         timestamp: Date.now(),
         emotion: 'sad',
       }
