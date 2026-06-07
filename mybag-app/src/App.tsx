@@ -4,7 +4,7 @@ import Live2DCanvas from "./components/Live2DCanvas"
 import type { Live2DCanvasHandle } from "./components/Live2DCanvas"
 import { getAIResponse } from "./services/ai"
 import { createSpeechRecognition } from "./services/stt"
-import { speak, isTTSSupported } from "./services/tts"
+import { speak, isTTSSupported, loadVoices } from "./services/tts"
 import { saveMessage, getRecentMessages, deleteOldMessages } from "./services/storage"
 import { getEmotionEmoji, getLive2DExpression, type Emotion } from "./services/emotion"
 import "./App.css"
@@ -35,6 +35,8 @@ function App() {
   const recognitionRef = useRef<ReturnType<typeof createSpeechRecognition> | null>(null)
   const expressionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [voiceBanner, setVoiceBanner] = useState<string | null>(null)
+  const [ttsReady, setTtsReady] = useState(false)
+  const [ttsInitErr, setTtsInitErr] = useState<string | null>(null)
 
   // 加载历史
   useEffect(() => {
@@ -62,6 +64,24 @@ function App() {
     }
     loadHistory()
     deleteOldMessages(30)
+  }, [])
+
+  // 预加载 TTS 语音列表
+  useEffect(() => {
+    const initTTS = async () => {
+      const voices = await loadVoices()
+      if (voices.length === 0) {
+        setTtsReady(false)
+        setTtsInitErr('未检测到语音引擎，无法朗读')
+        return
+      }
+      const hasZh = voices.some(v => v.lang && v.lang.startsWith('zh'))
+      if (!hasZh) {
+        setTtsInitErr('未找到中文语音，可能会用默认语音朗读')
+      }
+      setTtsReady(true)
+    }
+    initTTS()
   }, [])
 
   // 当前情绪
@@ -111,8 +131,8 @@ function App() {
       setMessages(prev => [...prev, aiMsg])
       triggerLive2DTalk(live2dRef)
       saveMessage({ id: aiMsg.id, role: "assistant", content: aiMsg.content, timestamp: aiMsg.timestamp, emotion })
-      if (autoSpeak && isTTSSupported()) {
-        setTimeout(() => speak(aiMsg.content, { onError: (err) => { console.warn("TTS:", err); setVoiceBanner(err.slice(0, 50)) } }), 300)
+      if (autoSpeak && ttsReady) {
+        speak(aiMsg.content, { onError: (err) => { console.warn("TTS:", err); setVoiceBanner(err.slice(0, 50)) } })
       }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error)
@@ -154,10 +174,10 @@ function App() {
     <div className="app-container">
       {/* 语音横幅 */}
       <AnimatePresence>
-        {voiceBanner && (
-          <motion.div className="voice-banner" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} onClick={() => setVoiceBanner(null)}>
-            <span>{voiceBanner}</span>
-            <button className="voice-banner-close" onClick={(e) => { e.stopPropagation(); setVoiceBanner(null) }}>&times;</button>
+        {(voiceBanner || ttsInitErr) && (
+          <motion.div className="voice-banner" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} onClick={() => { setVoiceBanner(null); setTtsInitErr(null) }}>
+            <span>{voiceBanner || ttsInitErr}</span>
+            <button className="voice-banner-close" onClick={(e) => { e.stopPropagation(); setVoiceBanner(null); setTtsInitErr(null) }}>&times;</button>
           </motion.div>
         )}
       </AnimatePresence>
