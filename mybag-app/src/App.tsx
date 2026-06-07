@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Live2DCanvas from './components/Live2DCanvas'
 import type { Live2DCanvasHandle } from './components/Live2DCanvas'
@@ -6,7 +6,7 @@ import { getAIResponse } from './services/ai'
 import { createSpeechRecognition } from './services/stt'
 import { speak, isTTSSupported } from './services/tts'
 import { saveMessage, getRecentMessages, deleteOldMessages } from './services/storage'
-import { getEmotionEmoji } from './services/emotion'
+import { getEmotionEmoji, getLive2DExpression, type Emotion } from './services/emotion'
 import './App.css'
 
 // 优先使用本地模型（打包在APK内），如果不存在则回退到CDN
@@ -36,6 +36,7 @@ function App() {
   const inputRef = useRef<HTMLInputElement>(null)
   const live2dRef = useRef<Live2DCanvasHandle>(null)
   const recognitionRef = useRef<ReturnType<typeof createSpeechRecognition> | null>(null)
+  const expressionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 初始化：加载历史消息
   useEffect(() => {
@@ -80,6 +81,56 @@ function App() {
   useEffect(() => {
     scrollToBottom()
   }, [messages, scrollToBottom])
+
+  // 当前 AI 表情（取最后一条 AI 消息的 emotion）
+  const currentEmotion = useMemo(() => {
+    const lastAi = messages.filter(m => m.role === 'assistant' && m.emotion).slice(-1)[0]
+    return (lastAi?.emotion as Emotion) || 'neutral'
+  }, [messages])
+
+  // 情绪变化时驱动 Live2D 表情
+  const setLive2DExpression = useCallback((emotion: Emotion) => {
+    const exprName = getLive2DExpression(emotion)
+    try {
+      if (exprName) {
+        live2dRef.current?.setExpression(exprName)
+      } else {
+        live2dRef.current?.setExpression('')
+      }
+    } catch { }
+
+    if (expressionTimerRef.current) {
+      clearTimeout(expressionTimerRef.current)
+      expressionTimerRef.current = null
+    }
+
+    if (emotion !== 'neutral') {
+      expressionTimerRef.current = setTimeout(() => {
+        try { live2dRef.current?.setExpression('') } catch { }
+      }, 3000)
+    }
+  }, [])
+
+  // 监听 currentEmotion
+  useEffect(() => {
+    setLive2DExpression(currentEmotion)
+  }, [currentEmotion, setLive2DExpression])
+
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (expressionTimerRef.current) clearTimeout(expressionTimerRef.current)
+    }
+  }, [])
+
+  // 点击头像区域触发 Live2D 互动
+  const handleAvatarClick = useCallback(() => {
+    try { live2dRef.current?.playMotion('tap_body') } catch { }
+    const emotions = ['happy', 'loving', 'surprised']
+    const randEmotion = emotions[Math.floor(Math.random() * emotions.length)]
+    setLive2DExpression(randEmotion as Emotion)
+    setTimeout(() => setLive2DExpression('neutral'), 3000)
+  }, [])
 
   // 发送消息
   const handleSend = async () => {
@@ -208,13 +259,11 @@ function App() {
     setIsRecording(false)
   }
 
-  // 当前情绪对应的头像表情
-  const currentEmotion = messages.filter(m => m.role === 'assistant' && m.emotion).slice(-1)[0]?.emotion || 'neutral'
 
   return (
     <div className="app-container">
       {/* Live2D 头像区域 */}
-      <div className="avatar-area">
+      <div className="avatar-area" onClick={handleAvatarClick}>
         <div className={`live2d-wrapper emotion-${currentEmotion}`}>
           <Live2DCanvas
             ref={live2dRef}

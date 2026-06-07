@@ -270,3 +270,92 @@
   box-shadow: none;
   cursor: not-allowed;
 }
+
+/* ===== TTS 切换按钮 ===== */
+.tts-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(126, 200, 227, 0.1);
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.tts-toggle.tts-on {
+  background: rgba(52, 199, 89, 0.15);
+  color: #34C759;
+  box-shadow: 0 0 8px rgba(52, 199, 89, 0.3);
+}
+
+/* ===== Live2D 情绪光效 ===== */
+.emotion-happy .live2d-wrapper {
+  filter: drop-shadow(0 0 12px rgba(255, 204, 0, 0.3));
+  transition: filter 0.5s ease;
+}
+
+.emotion-sad .live2d-wrapper {
+  filter: drop-shadow(0 0 12px rgba(100, 149, 237, 0.3));
+  transition: filter 0.5s ease;
+}
+
+.emotion-angry .live2d-wrapper {
+  filter: drop-shadow(0 0 12px rgba(255, 59, 48, 0.3));
+  transition: filter 0.5s ease;
+}
+
+.emotion-loving .live2d-wrapper {
+  filter: drop-shadow(0 0 16px rgba(255, 105, 180, 0.35));
+  transition: filter 0.5s ease;
+}
+
+.emotion-surprised .live2d-wrapper {
+  filter: drop-shadow(0 0 16px rgba(255, 215, 0, 0.4));
+  transition: filter 0.5s ease;
+}
+
+.emotion-neutral .live2d-wrapper {
+  filter: none;
+  transition: filter 0.5s ease;
+}
+
+.avatar-area {
+  position: relative;
+  overflow: hidden;
+}
+
+.avatar-area:active .live2d-wrapper {
+  transform: scale(0.97);
+  transition: transform 0.15s ease;
+}
+
+/* 情绪光晕背景 */
+.emotion-happy .avatar-area::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at center, rgba(255, 204, 0, 0.05), transparent 70%);
+  pointer-events: none;
+}
+
+.emotion-loving .avatar-area::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at center, rgba(255, 105, 180, 0.06), transparent 70%);
+  pointer-events: none;
+}
+
+/* 消息气泡悬停效果 */
+.message-bubble {
+  transition: box-shadow 0.2s ease;
+}
+
+.message-bubble:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
