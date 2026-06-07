@@ -71,7 +71,7 @@ function App() {
     const initTTS = async () => {
       const voices = await loadVoices()
       if (voices.length === 0) {
-        setTtsReady(false)
+        setTtsReady(true)  // 即使无语音列表也尝试朗读
         setTtsInitErr('未检测到语音引擎，无法朗读')
         return
       }
@@ -131,7 +131,7 @@ function App() {
       setMessages(prev => [...prev, aiMsg])
       triggerLive2DTalk(live2dRef)
       saveMessage({ id: aiMsg.id, role: "assistant", content: aiMsg.content, timestamp: aiMsg.timestamp, emotion })
-      if (autoSpeak && ttsReady) {
+      if (autoSpeak && isTTSSupported()) {
         speak(aiMsg.content, { onError: (err) => { console.warn("TTS:", err); setVoiceBanner(err.slice(0, 50)) } })
       }
     } catch (error) {

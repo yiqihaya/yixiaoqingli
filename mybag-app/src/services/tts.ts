@@ -2,7 +2,7 @@
 
 // 检查浏览器是否支持语音合成
 export function isTTSSupported(): boolean {
-  return !!window.speechSynthesis
+  return !!(window.speechSynthesis) || nativeAvailable
 }
 
 // 获取可用的台湾中文语音
@@ -40,6 +40,15 @@ interface TTSOptions {
 }
 
 // 朗读文本
+async function speakNative(text: string): Promise<boolean> {
+  try {
+    await NativeTTS.speak({ text })
+    return true
+  } catch {
+    return false
+  }
+}
+
 export function speak(text: string, options: TTSOptions = {}): {
   cancel: () => void
   pause: () => void
@@ -92,10 +101,21 @@ export function speak(text: string, options: TTSOptions = {}): {
   }
 }
 
+import NativeTTS from "./native-tts"
+
+let nativeAvailable = false
+NativeTTS.stop().then(() => { nativeAvailable = true }).catch(() => {})
+
 // 预加载语音列表（Chrome 需要异步获取）
 export function loadVoices(): Promise<SpeechSynthesisVoice[]> {
   return new Promise((resolve) => {
-    if (!isTTSSupported()) {
+    // Try native TTS first on Android
+  if (nativeAvailable) {
+    speakNative(text).catch(() => {})
+    return { cancel: () => { try { NativeTTS.stop() } catch {} }, pause: () => {}, resume: () => {} }
+  }
+
+  if (!isTTSSupported()) {
       resolve([])
       return
     }
