@@ -1,8 +1,13 @@
 // DeepSeek API 对话服务
 
-const API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY as string
-const API_URL = import.meta.env.VITE_DEEPSEEK_API_URL as string
-const MODEL = import.meta.env.VITE_DEEPSEEK_MODEL as string
+// 默认 Key（部署时可用自己的 Key 替换）
+const DEFAULT_API_KEY = 'sk-b86329b850c448fc93b95ce3839af1fd'
+const DEFAULT_API_URL = 'https://api.deepseek.com/v1/chat/completions'
+const DEFAULT_MODEL = 'deepseek-chat'
+
+const API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY || DEFAULT_API_KEY
+const API_URL = import.meta.env.VITE_DEEPSEEK_API_URL || DEFAULT_API_URL
+const MODEL = import.meta.env.VITE_DEEPSEEK_MODEL || DEFAULT_MODEL
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant'
