@@ -6,7 +6,7 @@ import { getAIResponse } from './services/ai'
 import { createSpeechRecognition } from './services/stt'
 import { speak, isTTSSupported } from './services/tts'
 import { saveMessage, getRecentMessages, deleteOldMessages } from './services/storage'
-import { analyzeEmotion, getEmotionEmoji } from './services/emotion'
+import { getEmotionEmoji } from './services/emotion'
 import './App.css'
 
 // 优先使用本地模型（打包在APK内），如果不存在则回退到CDN
