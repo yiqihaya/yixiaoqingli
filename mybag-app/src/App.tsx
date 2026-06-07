@@ -9,7 +9,9 @@ import { saveMessage, getRecentMessages, deleteOldMessages } from './services/st
 import { analyzeEmotion, getEmotionEmoji } from './services/emotion'
 import './App.css'
 
-const LIVE2D_MODEL_URL = 'https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/haru/haru_greeter_t03.model3.json'
+// 优先使用本地模型（打包在APK内），如果不存在则回退到CDN
+const LIVE2D_MODEL_URL =
+  new URL('./live2d-models/haru_greeter_t03.model3.json', import.meta.url).href
 
 interface Message {
   id: string
