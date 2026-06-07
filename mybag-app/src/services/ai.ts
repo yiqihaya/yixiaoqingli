@@ -1,6 +1,5 @@
 // DeepSeek API 对话服务
 
-// 默认 Key（部署时可用自己的 Key 替换）
 const DEFAULT_API_KEY = 'sk-b86329b850c448fc93b95ce3839af1fd'
 const DEFAULT_API_URL = 'https://api.deepseek.com/v1/chat/completions'
 const DEFAULT_MODEL = 'deepseek-chat'
@@ -25,7 +24,7 @@ const SYSTEM_PROMPT = `你是小晴，一個住在台北的24歲女孩。你不�
 
 ## 你的說話風格（非常重要）
 - 一定要用台灣國語腔，用繁體中文
-- 常用台式用語：好哦、真的假的、蛤、是喔、對耶、幹嘛啦、好累喔、超～、很鬧耶、北七、三小、靠北（適量）
+- 常用台式用語：好哦、真的假的、蛤、是喔、對耶、幹嘛啦、好累喔、超～
 - 句尾常用：喔、耶、啦、嘛、吧、餒
 - 有時會用「哈哈」「嘿嘿」「嗚嗚」「QQ」表達情緒
 - 可以適度使用台語詞：母湯、假掰、踹共、安啦、歹勢
@@ -42,8 +41,42 @@ const SYSTEM_PROMPT = `你是小晴，一個住在台北的24歲女孩。你不�
 - 不要每次都問問題，有時就單純回應
 - 根據對話情境自然反應，不要過度熱情`
 
-// 对话历史上下文最大条数
 const MAX_CONTEXT_MESSAGES = 20
+
+/**
+ * 用 XHR 发送请求（兼容 Android WebView）
+ */
+function xhrFetch(
+  url: string,
+  options: {
+    method: string
+    headers: Record<string, string>
+    body: string
+  }
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open(options.method, url, true)
+    xhr.timeout = 15000
+
+    for (const [key, value] of Object.entries(options.headers)) {
+      xhr.setRequestHeader(key, value)
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(xhr.responseText)
+      } else {
+        reject(new Error(`HTTP ${xhr.status}: ${xhr.responseText?.slice(0, 100)}`))
+      }
+    }
+
+    xhr.onerror = () => reject(new Error('網路請求失敗。請檢查手機網路連接。'))
+    xhr.ontimeout = () => reject(new Error('請求超時。AI 服務暫時忙碌，請稍後再試。'))
+
+    xhr.send(options.body)
+  })
+}
 
 /**
  * 调用 DeepSeek API 获取 AI 回复
@@ -52,45 +85,44 @@ export async function getAIResponse(
   userMessage: string,
   history: ChatMessage[] = []
 ): Promise<{ content: string; emotion: string }> {
-  // 构建消息列表
   const messages: ChatMessage[] = [
     { role: 'system', content: SYSTEM_PROMPT },
-    // 只取最近的历史（避免 token 过多）
     ...history.slice(-MAX_CONTEXT_MESSAGES),
     { role: 'user', content: userMessage }
   ]
 
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${API_KEY}`
-    },
-    body: JSON.stringify({
+  try {
+    const body = JSON.stringify({
       model: MODEL,
       messages,
-      temperature: 0.9,  // 稍微高一点让回复更有趣
-      max_tokens: 300,    // 限制回复长度，像真人聊天
+      temperature: 0.9,
+      max_tokens: 300,
       top_p: 0.95
     })
-  })
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`DeepSeek API 错误 (${response.status}): ${errorText}`)
+    const responseText = await xhrFetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`
+      },
+      body
+    })
+
+    const data = JSON.parse(responseText)
+    const content = data.choices?.[0]?.message?.content || ''
+
+    const emotion = detectEmotion(content)
+
+    return { content: content.trim(), emotion }
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error)
+    throw new Error(msg)
   }
-
-  const data = await response.json()
-  const content = data.choices?.[0]?.message?.content || ''
-
-  // 简单的情绪判断（阶段 6 会换成更复杂的情感分析）
-  const emotion = detectEmotion(content)
-
-  return { content: content.trim(), emotion }
 }
 
 /**
- * 简单的基于关键词的情绪检测
+ * 基于关键词的情绪检测
  */
 function detectEmotion(text: string): string {
   const lower = text.toLowerCase()

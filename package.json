@@ -1,0 +1,27 @@
+{
+  "name": "ai",
+  "version": "1.0.0",
+  "description": "> 🎀 你的专属 AI 女友",
+  "main": "registerSW.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://ghp_lnIQGZHF6Pxdu7WMqbF2eGK1BkfQ9u43K9ms@github.com/yiqihaya/yixiaoqingli.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/yiqihaya/yixiaoqingli/issues"
+  },
+  "homepage": "https://github.com/yiqihaya/yixiaoqingli#readme",
+  "dependencies": {
+    "@bubblewrap/cli": "^1.24.1"
+  }
+}
