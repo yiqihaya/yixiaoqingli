@@ -1,0 +1,59 @@
+name: 构建 APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 安装依赖
+        run: |
+          cd mybag-app
+          npm install
+
+      - name: 构建 Web
+        run: |
+          cd mybag-app
+          npx vite build --base=./
+          # 用 Capacitor 打包
+          npx cap sync android
+
+      - name: 构建 APK
+        run: |
+          cd mybag-app/android
+          # 生成签名密钥
+          keytool -genkey -v \
+            -keystore xiaoqing.keystore \
+            -alias xiaoqing \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass 123456 -keypass 123456 \
+            -dname "CN=小晴, OU=MyBag, O=MyBag, L=Taipei, ST=Taiwan, C=TW"
+          # 构建
+          ./gradlew assembleDebug
+          # 签名APK
+          jarsigner -keystore xiaoqing.keystore \
+            -storepass 123456 -keypass 123456 \
+            app/build/outputs/apk/debug/app-debug.apk xiaoqing
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: 小晴-APK
+          path: mybag-app/android/app/build/outputs/apk/debug/app-debug.apk
