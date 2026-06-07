@@ -1,0 +1,1 @@
+{"name":"MyBag AI 伴侣","short_name":"MyBag","description":"你的 AI 伴侣，随时陪伴你","start_url":"/","display":"standalone","background_color":"#E8F4FD","theme_color":"#E8F4FD","lang":"en","scope":"/","orientation":"portrait","icons":[{"src":"/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"/icon-512.png","sizes":"512x512","type":"image/png"}]}
