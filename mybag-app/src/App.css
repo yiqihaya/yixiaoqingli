@@ -1,367 +1,15 @@
-/* ===== MyBag AI — App 布局样式 ===== */
+﻿/* ===== MyBag AI — 圆形头像布局 ===== */
 
+/* 全屏容器 */
 .app-container {
   display: flex;
   flex-direction: column;
   height: 100dvh;
   height: 100vh;
-  background: linear-gradient(
-    180deg,
-    #E8F4FD 0%,
-    #D6ECFA 30%,
-    #C5E3F7 100%
-  );
+  background: linear-gradient(180deg, #E8F4FD 0%, #D6ECFA 40%, #C5E3F7 100%);
 }
 
-/* ===== Live2D 头像区域 ===== */
-
-.avatar-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding-top: env(safe-area-inset-top, 40px);
-  min-height: 0;
-  gap: 0;
-}
-
-.live2d-wrapper {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 0;
-  width: 100%;
-  overflow: hidden;
-}
-
-.live2d-canvas {
-  max-width: 100%;
-  max-height: 100%;
-}
-
-.live2d-canvas canvas {
-  display: block;
-  max-width: 100%;
-  max-height: 100%;
-}
-
-.avatar-info {
-  text-align: center;
-  padding-bottom: 8px;
-  flex-shrink: 0;
-}
-
-.avatar-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-text-main);
-  margin: 0;
-}
-
-.avatar-status {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  margin: 2px 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.avatar-status::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #34C759;
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-/* ===== 对话区域 ===== */
-
-.chat-area {
-  flex: 0 0 38%;
-  max-height: 42%;
-  display: flex;
-  flex-direction: column;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  overflow: hidden;
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 16px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.message-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  max-width: 85%;
-}
-
-.message-ai {
-  align-self: flex-start;
-}
-
-.message-user {
-  align-self: flex-end;
-  flex-direction: row-reverse;
-}
-
-.message-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #F0F8FF, #E0EFFA);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  cursor: pointer;
-}
-
-.message-bubble {
-  padding: 10px 14px;
-  border-radius: 18px;
-  font-size: 15px;
-  line-height: 1.5;
-  word-break: break-word;
-}
-
-.message-bubble p {
-  margin: 0;
-}
-
-.bubble-ai {
-  background: var(--color-bubble-ai);
-  color: var(--color-text-main);
-  border-bottom-left-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.bubble-user {
-  background: var(--color-bubble-user);
-  color: var(--color-text-main);
-  border-bottom-right-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
-
-/* AI 打字指示器 */
-.typing-bubble {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 12px 16px;
-}
-
-.typing-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--color-text-tertiary);
-  animation: typingBounce 1.4s ease-in-out infinite;
-}
-
-.typing-dot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing-dot:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes typingBounce {
-  0%, 60%, 100% {
-    transform: translateY(0);
-    opacity: 0.4;
-  }
-  30% {
-    transform: translateY(-6px);
-    opacity: 1;
-  }
-}
-
-/* ===== 输入栏 ===== */
-
-.input-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.6);
-}
-
-.voice-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(126, 200, 227, 0.15);
-  color: var(--color-primary-heavy);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.voice-btn-active {
-  background: #FF3B30;
-  color: white;
-  animation: recordingPulse 0.8s ease-in-out infinite;
-}
-
-@keyframes recordingPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4); }
-  50% { box-shadow: 0 0 0 12px rgba(255, 59, 48, 0); }
-}
-
-.input-wrapper {
-  flex: 1;
-  background: white;
-  border-radius: 22px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-}
-
-.text-input {
-  width: 100%;
-  border: none;
-  outline: none;
-  padding: 10px 16px;
-  font-size: 15px;
-  font-family: inherit;
-  background: transparent;
-  color: var(--color-text-main);
-}
-
-.text-input::placeholder {
-  color: var(--color-text-tertiary);
-}
-
-.send-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
-  background: var(--color-primary-heavy);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(126, 200, 227, 0.35);
-}
-
-.send-btn:disabled {
-  opacity: 0.4;
-  box-shadow: none;
-  cursor: not-allowed;
-}
-
-/* ===== TTS 切换按钮 ===== */
-.tts-toggle {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(126, 200, 227, 0.1);
-  color: var(--color-text-tertiary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-}
-
-.tts-toggle.tts-on {
-  background: rgba(52, 199, 89, 0.15);
-  color: #34C759;
-  box-shadow: 0 0 8px rgba(52, 199, 89, 0.3);
-}
-
-/* ===== Live2D 情绪光效 ===== */
-.emotion-happy .live2d-wrapper {
-  filter: drop-shadow(0 0 12px rgba(255, 204, 0, 0.3));
-  transition: filter 0.5s ease;
-}
-
-.emotion-sad .live2d-wrapper {
-  filter: drop-shadow(0 0 12px rgba(100, 149, 237, 0.3));
-  transition: filter 0.5s ease;
-}
-
-.emotion-angry .live2d-wrapper {
-  filter: drop-shadow(0 0 12px rgba(255, 59, 48, 0.3));
-  transition: filter 0.5s ease;
-}
-
-.emotion-loving .live2d-wrapper {
-  filter: drop-shadow(0 0 16px rgba(255, 105, 180, 0.35));
-  transition: filter 0.5s ease;
-}
-
-.emotion-surprised .live2d-wrapper {
-  filter: drop-shadow(0 0 16px rgba(255, 215, 0, 0.4));
-  transition: filter 0.5s ease;
-}
-
-.emotion-neutral .live2d-wrapper {
-  filter: none;
-  transition: filter 0.5s ease;
-}
-
-.avatar-area {
-  position: relative;
-  overflow: hidden;
-}
-
-.avatar-area:active .live2d-wrapper {
-  transform: scale(0.97);
-  transition: transform 0.15s ease;
-}
-
-/* 情绪光晕背景 */
-.emotion-happy .avatar-area::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: radial-gradient(ellipse at center, rgba(255, 204, 0, 0.05), transparent 70%);
-  pointer-events: none;
-}
-
-.emotion-loving .avatar-area::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: radial-gradient(ellipse at center, rgba(255, 105, 180, 0.06), transparent 70%);
-  pointer-events: none;
-}
-
-/* 消息气泡悬停效果 */
-.message-bubble {
-  transition: box-shadow 0.2s ease;
-}
-
-.message-bubble:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-
-/* ===== 语音状态提示横幅 ===== */
+/* ===== 语音提示横幅 ===== */
 .voice-banner {
   position: relative;
   z-index: 100;
@@ -374,34 +22,228 @@
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 149, 0, 0.2);
   cursor: pointer;
+  flex-shrink: 0;
 }
-
-.voice-banner p {
-  margin: 0;
+.voice-banner span {
   font-size: 12px;
   color: #CC7A00;
   flex: 1;
   line-height: 1.4;
 }
-
 .voice-banner-close {
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: none;
-  color: #CC7A00;
-  font-size: 18px;
+  width: 24px; height: 24px;
+  border: none; background: none;
+  color: #CC7A00; font-size: 18px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
   margin-left: 8px;
 }
 
-/* 语音按钮禁用状态 */
-.voice-btn-disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  pointer-events: auto;
+/* ===== 主舞台：圆形头像 + 气泡 ===== */
+.avatar-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 0;
+  padding: 0 8px;
 }
+
+/* ===== 气泡区域 ===== */
+.bubble-zone {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: 42%;
+  z-index: 10;
+}
+.bubble-zone-left {
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.bubble-zone-right {
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* 浮动气泡 */
+.chat-bubble {
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-word;
+  max-width: 100%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.chat-bubble p { margin: 0; }
+
+.chat-bubble-ai {
+  background: var(--color-bubble-ai);
+  color: var(--color-text-main);
+  border-bottom-left-radius: 6px;
+}
+.chat-bubble-user {
+  background: var(--color-bubble-user);
+  color: var(--color-text-main);
+  border-bottom-right-radius: 6px;
+}
+
+/* 打字指示器 */
+.typing-dot-bubble {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--color-text-tertiary);
+  margin-right: 3px;
+  animation: typingBounce 1.4s ease-in-out infinite;
+}
+.typing-dot-bubble:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot-bubble:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { opacity: 0.4; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-6px); }
+}
+
+/* ===== 圆形头像 ===== */
+.avatar-circle-wrapper {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.avatar-circle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 4px 20px rgba(126, 200, 227, 0.25);
+}
+
+.avatar-circle .live2d-canvas {
+  width: 100%;
+  height: 100%;
+}
+.avatar-circle canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* 圆形光晕 */
+.avatar-circle-glow {
+  position: absolute;
+  top: -8px; left: -8px;
+  right: -8px; bottom: -8px;
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 情绪光效 */
+.emotion-happy .avatar-circle-glow { box-shadow: 0 0 24px rgba(255, 204, 0, 0.3); }
+.emotion-sad .avatar-circle-glow { box-shadow: 0 0 24px rgba(100, 149, 237, 0.3); }
+.emotion-angry .avatar-circle-glow { box-shadow: 0 0 24px rgba(255, 59, 48, 0.3); }
+.emotion-loving .avatar-circle-glow { box-shadow: 0 0 28px rgba(255, 105, 180, 0.3); }
+.emotion-surprised .avatar-circle-glow { box-shadow: 0 0 28px rgba(255, 215, 0, 0.35); }
+.emotion-neutral .avatar-circle-glow { box-shadow: 0 0 18px rgba(126, 200, 227, 0.2); }
+
+/* ===== 状态文字 ===== */
+.avatar-status-bar {
+  text-align: center;
+  padding: 0 0 8px;
+  flex-shrink: 0;
+}
+.avatar-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-main);
+  margin: 0;
+}
+.avatar-status-text {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin: 2px 0 0;
+}
+
+/* ===== 输入栏 ===== */
+.input-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-top: 1px solid rgba(255,255,255,0.6);
+  flex-shrink: 0;
+}
+
+.voice-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(126,200,227,0.15);
+  color: var(--color-primary-heavy);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.voice-btn-active {
+  background: #FF3B30; color: white;
+  animation: recordingPulse 0.8s ease-in-out infinite;
+}
+@keyframes recordingPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(255,59,48,0); }
+}
+
+.input-wrapper {
+  flex: 1;
+  background: white;
+  border-radius: 22px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.text-input {
+  width: 100%;
+  border: none; outline: none;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-family: inherit;
+  background: transparent;
+  color: var(--color-text-main);
+}
+.text-input::placeholder { color: var(--color-text-tertiary); }
+
+/* TTS 切换 */
+.tts-toggle {
+  width: 40px; height: 40px;
+  border-radius: 50%; border: none;
+  background: rgba(126,200,227,0.1);
+  color: var(--color-text-tertiary);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.tts-toggle.tts-on {
+  background: rgba(52,199,89,0.15);
+  color: #34C759;
+  box-shadow: 0 0 8px rgba(52,199,89,0.3);
+}
+
+.send-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%; border: none;
+  background: var(--color-primary-heavy);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(126,200,227,0.35);
+}
+.send-btn:disabled { opacity: 0.4; box-shadow: none; cursor: not-allowed; }
