@@ -6,6 +6,7 @@ import { getAIResponse } from './services/ai'
 import { createSpeechRecognition } from './services/stt'
 import { speak, isTTSSupported } from './services/tts'
 import { saveMessage, getRecentMessages, deleteOldMessages } from './services/storage'
+import { isSTTSupported } from './services/stt'
 import { getEmotionEmoji, getLive2DExpression, type Emotion } from './services/emotion'
 import './App.css'
 
@@ -31,12 +32,14 @@ function App() {
   const [inputText, setInputText] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
-  const [autoSpeak, setAutoSpeak] = useState(false) // 是否自动朗读
+  const [autoSpeak, setAutoSpeak] = useState(true) // 是否自动朗读（默认开启）
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const live2dRef = useRef<Live2DCanvasHandle>(null)
   const recognitionRef = useRef<ReturnType<typeof createSpeechRecognition> | null>(null)
   const expressionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [voiceBanner, setVoiceBanner] = useState<string | null>(null)
+  const [ttsSupported, setTtsSupported] = useState(true)
 
   // 初始化：加载历史消息
   useEffect(() => {
@@ -185,7 +188,7 @@ function App() {
 
       // 自动朗读
       if (autoSpeak && isTTSSupported()) {
-        setTimeout(() => speak(aiMsg.content), 300)
+        setTimeout(() => speak(aiMsg.content, { onError: (err) => { console.warn('TTS:', err); setVoiceBanner(err.slice(0, 50)) } }), 300)
       }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error)
@@ -233,6 +236,7 @@ function App() {
         },
         onError: (err) => {
           console.warn('语音识别:', err)
+          setVoiceBanner(err)
           setIsRecording(false)
           recognitionRef.current = null
         },
@@ -325,6 +329,22 @@ function App() {
           <div ref={messagesEndRef} />
         </div>
       </div>
+
+      {/* 语音状态提示横幅 */}
+      <AnimatePresence>
+        {voiceBanner && (
+          <motion.div
+            className="voice-banner"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            onClick={() => setVoiceBanner(null)}
+          >
+            <span>{voiceBanner}</span>
+            <button className="voice-banner-close" onClick={(e) => { e.stopPropagation(); setVoiceBanner(null); }}>&times;</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 输入栏 */}
       <div className="input-bar glass safe-bottom">
