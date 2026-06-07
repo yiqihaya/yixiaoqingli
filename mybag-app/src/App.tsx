@@ -3,36 +3,74 @@ import { AnimatePresence, motion } from 'framer-motion'
 import Live2DCanvas from './components/Live2DCanvas'
 import type { Live2DCanvasHandle } from './components/Live2DCanvas'
 import { getAIResponse } from './services/ai'
+import { createSpeechRecognition } from './services/stt'
+import { speak, isTTSSupported } from './services/tts'
+import { saveMessage, getRecentMessages, deleteOldMessages } from './services/storage'
+import { analyzeEmotion, getEmotionEmoji } from './services/emotion'
 import './App.css'
 
-// Live2D Haru 模型的 CDN 地址（免费示例）
-const LIVE2D_MODEL_URL =
-  'https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/haru/haru_greeter_t03.model3.json'
+const LIVE2D_MODEL_URL = 'https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/haru/haru_greeter_t03.model3.json'
 
 interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: number
+  emotion?: string
+}
+
+// AI 说话时触发 Live2D 动作
+function triggerLive2DTalk(ref: React.RefObject<Live2DCanvasHandle | null>) {
+  try { ref.current?.playMotion('tap_body') } catch { /* ignore */ }
 }
 
 function App() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: '嗨～你來啦！今天過得怎麼樣呀？我一直都在想你喔～',
-      timestamp: Date.now() - 60000
-    }
-  ])
+  const [messages, setMessages] = useState<Message[]>([])
   const [inputText, setInputText] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
+  const [autoSpeak, setAutoSpeak] = useState(false) // 是否自动朗读
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const live2dRef = useRef<Live2DCanvasHandle>(null)
+  const recognitionRef = useRef<ReturnType<typeof createSpeechRecognition> | null>(null)
 
-  // 自动滚动到底部
+  // 初始化：加载历史消息
+  useEffect(() => {
+    const loadHistory = async () => {
+      const history = await getRecentMessages(50)
+      if (history.length > 0) {
+        setMessages(history.map(m => ({
+          id: m.id!,
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          timestamp: m.timestamp,
+          emotion: m.emotion,
+        })))
+      } else {
+        // 首次使用，显示欢迎语
+        const welcomeMsg: Message = {
+          id: 'welcome',
+          role: 'assistant',
+          content: '嗨～你來啦！我等你好久了耶～今天過得怎麼樣呀？',
+          timestamp: Date.now(),
+          emotion: 'loving',
+        }
+        setMessages([welcomeMsg])
+        saveMessage({
+          id: welcomeMsg.id,
+          role: 'assistant',
+          content: welcomeMsg.content,
+          timestamp: welcomeMsg.timestamp,
+          emotion: 'loving',
+        })
+      }
+    }
+    loadHistory()
+    deleteOldMessages(30) // 保留最近30天
+  }, [])
+
+  // 自动滚动
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
@@ -41,6 +79,7 @@ function App() {
     scrollToBottom()
   }, [messages, scrollToBottom])
 
+  // 发送消息
   const handleSend = async () => {
     if (!inputText.trim() || isTyping) return
 
@@ -48,52 +87,66 @@ function App() {
       id: Date.now().toString(),
       role: 'user',
       content: inputText.trim(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
 
     setMessages(prev => [...prev, userMsg])
     setInputText('')
     setIsTyping(true)
+    triggerLive2DTalk(live2dRef)
 
-    // 触发 Live2D 说话动作
-    try {
-      live2dRef.current?.playMotion('tap_body')
-    } catch { /* ignore */ }
+    // 保存用户消息
+    saveMessage({
+      id: userMsg.id,
+      role: 'user',
+      content: userMsg.content,
+      timestamp: userMsg.timestamp,
+    })
 
     try {
-      // 构建对话历史（不含第一条欢迎消息）
       const history = messages
-        .filter(m => m.id !== '1')
-        .map(m => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content
-        }))
+        .filter(m => m.id !== 'welcome')
+        .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
 
-      const { content } = await getAIResponse(userMsg.content, history)
+      const { content, emotion } = await getAIResponse(userMsg.content, history)
 
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        emotion,
       }
 
       setMessages(prev => [...prev, aiMsg])
+      triggerLive2DTalk(live2dRef)
+
+      // 保存 AI 消息
+      saveMessage({
+        id: aiMsg.id,
+        role: 'assistant',
+        content: aiMsg.content,
+        timestamp: aiMsg.timestamp,
+        emotion,
+      })
+
+      // 自动朗读
+      if (autoSpeak && isTTSSupported()) {
+        setTimeout(() => speak(aiMsg.content), 300)
+      }
     } catch (error) {
-      console.error('AI 回复失败:', error)
+      console.error('AI error:', error)
       const errorMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: '嗚嗚…剛剛網路怪怪的，你再說一次好不好？QQ',
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        emotion: 'sad',
       }
       setMessages(prev => [...prev, errorMsg])
     } finally {
       setIsTyping(false)
-      // 回复后触发 Live2D 动作
-      try {
-        live2dRef.current?.playMotion('tap_body')
-      } catch { /* ignore */ }
+      triggerLive2DTalk(live2dRef)
     }
   }
 
@@ -104,18 +157,62 @@ function App() {
     }
   }
 
-  // 语音按钮
-  const handleVoiceStart = () => setIsRecording(true)
-  const handleVoiceEnd = () => {
-    setIsRecording(false)
-    // 阶段 4 接入真实语音识别
+  // ===== 语音识别 =====
+  const handleVoiceStart = () => {
+    if (recognitionRef.current) return
+    setIsRecording(true)
+
+    try {
+      const rec = createSpeechRecognition({
+        lang: 'zh-TW',
+        continuous: false,
+        interimResults: false,
+        onResult: (text) => {
+          setInputText(text)
+          setIsRecording(false)
+          recognitionRef.current = null
+          // 自动发送
+          setTimeout(() => {
+            inputRef.current?.focus()
+            if (text.trim()) handleSend()
+          }, 300)
+        },
+        onError: (err) => {
+          console.warn('语音识别:', err)
+          setIsRecording(false)
+          recognitionRef.current = null
+        },
+        onEnd: () => {
+          setIsRecording(false)
+          recognitionRef.current = null
+        },
+      })
+      recognitionRef.current = rec
+      rec.start()
+    } catch {
+      setIsRecording(false)
+      recognitionRef.current = null
+      // 降级：直接输入文字提示
+      setInputText('（語音不可用，請打字輸入喔～）')
+    }
   }
+
+  const handleVoiceEnd = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop()
+      recognitionRef.current = null
+    }
+    setIsRecording(false)
+  }
+
+  // 当前情绪对应的头像表情
+  const currentEmotion = messages.filter(m => m.role === 'assistant' && m.emotion).slice(-1)[0]?.emotion || 'neutral'
 
   return (
     <div className="app-container">
       {/* Live2D 头像区域 */}
       <div className="avatar-area">
-        <div className="live2d-wrapper">
+        <div className={`live2d-wrapper emotion-${currentEmotion}`}>
           <Live2DCanvas
             ref={live2dRef}
             modelUrl={LIVE2D_MODEL_URL}
@@ -129,9 +226,11 @@ function App() {
           animate={isTyping ? { opacity: [1, 0.7, 1] } : { opacity: 1 }}
           transition={isTyping ? { repeat: Infinity, duration: 0.8 } : {}}
         >
-          <p className="avatar-name">小晴</p>
+          <p className="avatar-name">
+            小晴 {getEmotionEmoji(currentEmotion)}
+          </p>
           <p className="avatar-status">
-            {isTyping ? '輸入中...' : '在線 · 等你聊天'}
+            {isTyping ? '輸入中...' : isRecording ? '聽你說話...' : '在線 · 等你聊天'}
           </p>
         </motion.div>
       </div>
@@ -150,7 +249,7 @@ function App() {
                 transition={{ duration: 0.28, ease: [0.25, 0.1, 0.25, 1] }}
               >
                 {msg.role === 'assistant' && (
-                  <div className="message-avatar">🎀</div>
+                  <div className="message-avatar">{getEmotionEmoji(msg.emotion || 'neutral')}</div>
                 )}
                 <div className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
                   <p>{msg.content}</p>
@@ -159,13 +258,9 @@ function App() {
             ))}
           </AnimatePresence>
 
-          {/* AI 正在输入指示器 */}
+          {/* AI 打字指示器 */}
           {isTyping && (
-            <motion.div
-              className="message-row message-ai"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
+            <motion.div className="message-row message-ai" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
               <div className="message-avatar">🎀</div>
               <div className="message-bubble bubble-ai typing-bubble">
                 <span className="typing-dot" />
@@ -181,6 +276,7 @@ function App() {
 
       {/* 输入栏 */}
       <div className="input-bar glass safe-bottom">
+        {/* 语音按钮 */}
         <motion.button
           className={`voice-btn ${isRecording ? 'voice-btn-active' : ''}`}
           aria-label="语音输入"
@@ -203,12 +299,31 @@ function App() {
             ref={inputRef}
             type="text"
             className="text-input"
-            placeholder="想說什麼..."
+            placeholder={isRecording ? '听你說話中...' : '想說什麼...'}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
           />
         </div>
+
+        {/* 自动朗读开关 */}
+        <motion.button
+          className={`tts-toggle ${autoSpeak ? 'tts-on' : ''}`}
+          onClick={() => setAutoSpeak(!autoSpeak)}
+          whileTap={{ scale: 0.9 }}
+          aria-label={autoSpeak ? '关闭朗读' : '开启朗读'}
+          title={autoSpeak ? '关闭自动朗读' : '开启自动朗读'}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 5 6 9H2v6h4l5 4V5Z" />
+            {autoSpeak && (
+              <>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              </>
+            )}
+          </svg>
+        </motion.button>
 
         <motion.button
           className="send-btn"
